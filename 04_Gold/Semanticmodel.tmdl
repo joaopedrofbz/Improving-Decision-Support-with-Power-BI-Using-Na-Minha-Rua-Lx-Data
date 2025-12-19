@@ -1,0 +1,1189 @@
+createOrReplace
+
+	model Model
+		culture: en-US
+		defaultPowerBIDataSourceVersion: powerBI_V3
+		sourceQueryCulture: en-US
+		dataAccessOptions
+			legacyRedirects
+			returnErrorValuesAsNull
+
+		table fact_incident_daily
+			lineageTag: 8038c7eb-8b13-4b83-b83e-5ffe3546ecb7
+			sourceLineageTag: [dbo].[fact_incident_daily]
+
+			measure Incidents =
+					
+					COUNTROWS ( fact_incident_daily )
+				formatString: #,0
+				displayFolder: Incidents\Core
+				lineageTag: 80276a02-2535-474f-84e5-a00ab3d49eca
+
+				changedProperty = Name
+
+				changedProperty = FormatString
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents YTD' =
+					
+					CALCULATE ( [Incidents], DATESYTD ( dim_date[Registration Date] ) )
+				formatString: #,0
+				displayFolder: Incidents\Time Intelligence
+				lineageTag: be06d156-50b2-415b-be1f-a78d520aff3c
+
+				changedProperty = Name
+
+				changedProperty = FormatString
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents YoY %' =
+					
+					
+					VAR Prev =
+					    CALCULATE ( [Incidents], SAMEPERIODLASTYEAR ( dim_date[Registration Date] ) )
+					RETURN DIVIDE ( [Incidents] - Prev, Prev )
+				formatString: 0.00%;-0.00%;0.00%
+				displayFolder: Incidents\Time Intelligence
+				lineageTag: 7afcb96c-3c5f-4032-a108-20842a127dd3
+
+				changedProperty = Name
+
+				changedProperty = FormatString
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents (LY)' =
+					
+					CALCULATE ( [Incidents], SAMEPERIODLASTYEAR ( dim_date[Registration Date] ) )
+				formatString: #,0
+				displayFolder: Incidents\Time Intelligence
+				lineageTag: dff29229-faef-4cdc-9582-76670d17c885
+
+				changedProperty = Name
+
+				changedProperty = FormatString
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents Baseline Daily' = ```
+					
+					VAR CurrentDate = MAX ( 'dim_date'[Registration Date] )
+					VAR RefDay      = CurrentDate - 1
+					VAR Win =
+					    DATESINPERIOD (
+					        'dim_date'[Registration Date],
+					        RefDay,
+					        -28,
+					        DAY
+					    )
+					RETURN
+					AVERAGEX (
+					    Win,
+					    CALCULATE ( [Incidents] )
+					)
+					
+					```
+				displayFolder: Incidents\Baseline
+				lineageTag: a52918cf-882c-4a5e-be18-0b4f2f58daf8
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Baseline Daily StdDev' =
+					
+					VAR RefDay = MAX ( dim_date[Registration Date] ) - 1
+					VAR Win    = DATESINPERIOD ( dim_date[Registration Date], RefDay, -28, DAY )
+					RETURN STDEVX.P ( Win, [Incidents] )
+				displayFolder: Incidents\Baseline
+				lineageTag: d80f5210-5997-46d5-b6c0-97b4345b4346
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Baseline Monthly' = ```
+					
+					VAR LastCompleteMonthEnd =
+					    EOMONTH ( MAX ( 'dim_date'[Registration Date] ), -1 )
+					
+					VAR Past12MonthsDates =
+					    DATESINPERIOD (
+					        'dim_date'[Registration Date],
+					        LastCompleteMonthEnd,
+					        -12,
+					        MONTH
+					    )
+					
+					VAR MonthlyTable =
+					    SUMMARIZE (
+					        CALCULATETABLE (           -- usa dim_date como base
+					            'dim_date',
+					            Past12MonthsDates      -- intervalo dos últimos 12 meses completos
+					        ),
+					        'dim_date'[Year],
+					        'dim_date'[Month],
+					        "MonthlyIncidents", [Incidents]
+					    )
+					RETURN
+					    AVERAGEX ( MonthlyTable, [MonthlyIncidents] )
+					
+					```
+				displayFolder: Incidents\Baseline
+				lineageTag: 9ee72758-a974-4bd2-b66d-4b9f56fe4144
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Baseline Monthly StdDev' =
+					
+					VAR RefMonth = EOMONTH ( MAX ( dim_date[Registration Date] ), -1 )
+					VAR Win      = DATESINPERIOD ( dim_date[Registration Date], RefMonth, -12, MONTH )
+					RETURN STDEVX.P ( Win, [Incidents] )
+				displayFolder: Incidents\Baseline
+				lineageTag: 6feb44fb-6966-456c-85b3-9ce75aaa4376
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Anomaly % Daily' = ```
+					
+					DIVIDE ( [Incidents] - [Incidents Baseline Daily], [Incidents Baseline Daily] )
+					
+					```
+				displayFolder: Incidents\Anomalies
+				lineageTag: 3b496261-4300-4d61-875f-162fa8d931fc
+
+				changedProperty = DisplayFolder
+
+				changedProperty = Name
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Anomaly Z-Score Daily' = ```
+					
+					DIVIDE ( [Incidents] - [Incidents Baseline Daily], [Incidents Baseline Daily StdDev] )
+					
+					```
+				displayFolder: Incidents\Anomalies
+				lineageTag: 510c80e5-77a9-45d3-aff6-42acccd7bbca
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Anomaly % Monthly' = ```
+					
+					DIVIDE ( [Incidents] - [Incidents Baseline Monthly], [Incidents Baseline Monthly] )
+					
+					```
+				displayFolder: Incidents\Anomalies
+				lineageTag: a2b55302-deb8-49a3-93f2-5b1964972215
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Anomaly Z-Score Monthly' =
+					
+					DIVIDE ( [Incidents] - [Incidents Baseline Monthly], [Incidents Baseline Monthly StdDev] )
+				displayFolder: Incidents\Anomalies
+				lineageTag: 21d7f114-eaa3-4565-ae5e-a9d671220a5f
+
+				changedProperty = DisplayFolder
+
+				changedProperty = Name
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Baseline (Adaptive)' = ```
+					
+					VAR IsDay =
+					    ISINSCOPE ( 'dim_date'[Registration Date] )
+					VAR IsMonth =
+					    ISINSCOPE ( 'dim_date'[Month] )
+					RETURN
+					SWITCH (
+					    TRUE(),
+					    IsDay,
+					        [Incidents Baseline Daily],      -- nível Data (dia completo)
+					    IsMonth,
+					        [Incidents Baseline Monthly],    -- nível Mês
+					    [Incidents Baseline Monthly]         -- fallback p/ níveis acima
+					)
+					
+					```
+				displayFolder: Incidents\Baseline
+				lineageTag: f8bfddf6-2135-4310-8d03-d2bc75fe7071
+
+				changedProperty = DisplayFolder
+
+				changedProperty = Name
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Baseline StdDev (Adaptive)' =
+					
+					IF ( ISINSCOPE ( dim_date[Registration Date] ),
+					     [Incidents Baseline Daily StdDev],
+					     [Incidents Baseline Monthly StdDev] )
+				displayFolder: Incidents\Baseline
+				lineageTag: 2b2a1a68-615f-4e9c-a084-bfb1896db628
+
+				changedProperty = DisplayFolder
+
+				changedProperty = Name
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents vs Baseline % (Daily)' =
+					
+					DIVIDE ( [Incidents] - [Incidents Baseline Daily],
+					         [Incidents Baseline Daily] )
+				formatString: 0.00%;-0.00%;0.00%
+				displayFolder: Incidents\Baseline
+				lineageTag: c60f8ac9-f663-4ce6-be87-cbaf3df59e6a
+
+				changedProperty = DisplayFolder
+
+				changedProperty = Name
+
+				changedProperty = FormatString
+
+			measure 'Avg Incidents' = ```
+					
+					VAR Dates =
+					    VALUES ( 'dim_date'[Registration Date] )
+					RETURN
+					AVERAGEX ( Dates, [Incidents] )
+					
+					```
+				formatString: #,0
+				displayFolder: Incidents\Core
+				lineageTag: 613afbbe-43ee-49b5-bf9f-bc43886906b9
+
+				changedProperty = DisplayFolder
+
+				changedProperty = Name
+
+				changedProperty = FormatString
+
+			measure 'Incidents Anomaly Flag (Daily)' = ```
+					
+					VAR z   = [Incidents Anomaly Z-Score Daily]
+					VAR b   = [Incidents Baseline Daily]
+					VAR thr = 2.0   -- limiar; se quiseres podes tornar isto um parâmetro
+					RETURN
+					IF ( NOT ISBLANK ( z ) && b > 0 && z >= thr, 1, 0 )
+					
+					```
+				formatString: 0
+				displayFolder: Incidents\Anomalies\Flags
+				lineageTag: 967e8415-89c4-40c7-b848-2b1ff7ccfaf9
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents Anomaly Flag (Monthly)' = ```
+					
+					VAR z   = [Incidents Anomaly Z-Score Monthly]
+					VAR b   = [Incidents Baseline Monthly]
+					VAR thr = 2.0
+					RETURN
+					IF ( NOT ISBLANK ( z ) && b > 0 && z >= thr, 1, 0 )
+					
+					```
+				formatString: 0
+				displayFolder: Incidents\Anomalies\Flags
+				lineageTag: a55608f0-5279-468e-94a3-ed9d7297418e
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents Anomaly Flag (Adaptive)' = ```
+					
+					IF (
+					    ISINSCOPE ( dim_date[Registration Date] ),
+					        [Incidents Anomaly Flag (Daily)],      -- nível dia
+					        [Incidents Anomaly Flag (Monthly)]     -- níveis ≥ mês
+					)
+					
+					```
+				formatString: 0
+				displayFolder: Incidents\Anomalies\Flags
+				lineageTag: 29f733d0-2572-46ac-8ffd-b61a481a047e
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Anomaly Days Count' = ```
+					
+					VAR DatesInContext =
+					    VALUES ( 'dim_date'[Registration Date] )
+					RETURN
+					SUMX (
+					    DatesInContext,
+					    [Incidents Anomaly Flag (Daily)]
+					)
+					
+					```
+				formatString: 0
+				displayFolder: Incidents\Anomalies
+				lineageTag: ce9a1bad-d8b7-41ad-ae35-a4d22dd8f3c0
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Anomaly Days %' = ```
+					
+					VAR DaysWithAnomaly =
+					    [Anomaly Days Count]
+					VAR TotalDays =
+					    DISTINCTCOUNT ( 'dim_date'[Registration Date] )
+					RETURN
+					DIVIDE ( DaysWithAnomaly, TotalDays )
+					
+					```
+				formatString: 0.00%;-0.00%;0.00%
+				displayFolder: Incidents\Anomalies
+				lineageTag: 1c45e242-e53a-4b9e-82cd-6ce68eca0c5e
+
+				changedProperty = Name
+
+				changedProperty = FormatString
+
+				changedProperty = IsHidden
+
+				changedProperty = DisplayFolder
+
+			measure 'Avg Anomaly Z-Score (Daily)' = ```
+					
+					AVERAGEX (
+					    VALUES ( dim_date[Registration Date] ),
+					    [Incidents Anomaly Z-Score Daily]
+					)
+					
+					```
+				displayFolder: Incidents\Anomalies
+				lineageTag: 628e2789-f538-4c13-8cb7-6f3043c3d0f5
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents Anomaly Z-Score (Adaptive)' = ```
+					
+					VAR IsDay =
+					    ISINSCOPE ( 'dim_date'[Registration Date] )
+					VAR IsMonth =
+					    ISINSCOPE ( 'dim_date'[Month] )
+					RETURN
+					SWITCH (
+					    TRUE(),
+					    IsDay,
+					        [Incidents Anomaly Z-Score Daily],    -- nível dia
+					    IsMonth,
+					        [Incidents Anomaly Z-Score Monthly],  -- nível mês (ou acima)
+					    [Incidents Anomaly Z-Score Monthly]       -- fallback p/ trimestres, anos, etc.
+					)
+					
+					```
+				formatString: #,0.00
+				displayFolder: Incidents\Anomalies
+				lineageTag: 3db262b0-5f0f-4795-b920-7766e864da8a
+
+				changedProperty = Name
+
+				changedProperty = FormatString
+
+				changedProperty = DisplayFolder
+
+			measure 'Avg Incidents per Parish' = ```
+					
+					VAR TotalIncidents =
+					    CALCULATE( [Incidents], ALL( dim_location ) )
+					VAR ParishCount =
+					    CALCULATE( DISTINCTCOUNT( dim_location[sk_location] ), ALL( dim_location ) )
+					RETURN
+					DIVIDE( TotalIncidents, ParishCount )
+					
+					
+					```
+				displayFolder: Incidents\Territory
+				lineageTag: 21f4803e-a2c0-47e6-a408-6b15fd9b5a4e
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Pressure Index' =
+					
+					DIVIDE( [Incidents], [Avg Incidents per Parish] )
+				displayFolder: Incidents\Territory
+				lineageTag: 504c4e3f-7345-4896-9178-96779722775a
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column sk_date
+				dataType: int64
+				isHidden
+				isNullable: false
+				formatString: 0
+				lineageTag: dabab523-c484-4b20-8951-d9bc884e6406
+				sourceLineageTag: sk_date
+				summarizeBy: none
+				sourceColumn: sk_date
+
+				changedProperty = SummarizeBy
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = User
+
+			column sk_location
+				dataType: int64
+				isHidden
+				isNullable: false
+				formatString: 0
+				lineageTag: 2755d79f-efe7-4413-9eec-2a38c0bbe017
+				sourceLineageTag: sk_location
+				summarizeBy: none
+				sourceColumn: sk_location
+
+				changedProperty = SummarizeBy
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = User
+
+			column sk_incident_type
+				dataType: int64
+				isHidden
+				isNullable: false
+				formatString: 0
+				lineageTag: dfd82226-3158-4df2-8f12-f066cba90690
+				sourceLineageTag: sk_incident_type
+				summarizeBy: none
+				sourceColumn: sk_incident_type
+
+				changedProperty = SummarizeBy
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = User
+
+			column sk_fact_incident
+				dataType: int64
+				isHidden
+				isNullable: false
+				formatString: 0
+				lineageTag: 097d135a-6fb8-4e5e-834a-c6f15e4aa7ce
+				sourceLineageTag: sk_fact_incident
+				summarizeBy: none
+				sourceColumn: sk_fact_incident
+
+				changedProperty = SummarizeBy
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = User
+
+			column bk_fact_incident
+				dataType: string
+				lineageTag: b833d4a9-86c4-4e99-9324-aef7549bcbad
+				sourceLineageTag: bk_fact_incident
+				summarizeBy: none
+				sourceColumn: bk_fact_incident
+
+				annotation SummarizationSetBy = Automatic
+
+			partition fact_incident_daily = entity
+				mode: directLake
+				source
+					entityName: fact_incident_daily
+					expressionSource: 'DirectLake - LH_SOURCES_NA_MINHA_RUA'
+
+		table dim_date
+			lineageTag: 7167c32b-4783-4765-8c00-bf69af327f36
+			sourceLineageTag: [dbo].[dim_date]
+
+			column Month
+				dataType: int64
+				formatString: 0
+				lineageTag: 3ddcb24b-d8ec-4864-842d-64368091cab2
+				sourceLineageTag: Month
+				summarizeBy: sum
+				sourceColumn: Month
+
+				annotation SummarizationSetBy = Automatic
+
+			column Day
+				dataType: int64
+				formatString: 0
+				lineageTag: 6a35695c-61ac-4ed4-b0ca-a83ecba58dd4
+				sourceLineageTag: Day
+				summarizeBy: sum
+				sourceColumn: Day
+
+				annotation SummarizationSetBy = Automatic
+
+			column Year
+				dataType: int64
+				formatString: 0
+				lineageTag: d13662ff-ce9d-4017-a944-961ffe3c6404
+				sourceLineageTag: Year
+				summarizeBy: sum
+				sourceColumn: Year
+
+				annotation SummarizationSetBy = Automatic
+
+			column sk_date
+				dataType: int64
+				isHidden
+				isNullable: false
+				formatString: 0
+				lineageTag: f1cbf00d-b77b-4f38-810f-f5585b6bc641
+				sourceLineageTag: sk_date
+				summarizeBy: none
+				sourceColumn: sk_date
+
+				changedProperty = SummarizeBy
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = User
+
+			column Trimester
+				dataType: int64
+				formatString: 0
+				lineageTag: 3f6ce17e-b799-44e0-81da-bca2dd83ed31
+				sourceLineageTag: Trimester
+				summarizeBy: sum
+				sourceColumn: Trimester
+
+				annotation SummarizationSetBy = Automatic
+
+			column Semester
+				dataType: string
+				lineageTag: e08e4316-e532-40f0-9048-6b12632b2f62
+				sourceLineageTag: Semester
+				summarizeBy: none
+				sourceColumn: Semester
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Is Last Year'
+				dataType: boolean
+				formatString: """TRUE"";""TRUE"";""FALSE"""
+				lineageTag: 4bf87040-52b5-4edf-ab31-0a0cf4f5c92b
+				sourceLineageTag: Is Last Year
+				summarizeBy: none
+				sourceColumn: Is Last Year
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Is Last Year-1 Until Last Period'
+				dataType: boolean
+				formatString: """TRUE"";""TRUE"";""FALSE"""
+				lineageTag: ec0d5625-bb03-4422-95cb-4cfa29d6247e
+				sourceLineageTag: Is Last Year-1 Until Last Period
+				summarizeBy: none
+				sourceColumn: Is Last Year-1 Until Last Period
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Week Day'
+				dataType: string
+				lineageTag: 3f426b3b-36b1-4284-a63a-9e3a237d7ab7
+				sourceLineageTag: Week Day
+				summarizeBy: none
+				sourceColumn: Week Day
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Registration Date'
+				dataType: dateTime
+				formatString: Short Date
+				lineageTag: b30a65b0-2492-4f61-a2c5-1669e3ce74f7
+				sourceLineageTag: Registration Date
+				summarizeBy: none
+				sourceColumn: Registration Date
+
+				changedProperty = DataType
+
+				changedProperty = FormatString
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation UnderlyingDateTimeDataType = Date
+
+			hierarchy 'Year Hierarchy'
+				lineageTag: f37ae569-5ba1-4a01-a5f0-5a035f68b20b
+
+				level Year
+					lineageTag: 74900570-ddfd-4020-8399-90c14499d662
+					column: Year
+
+				level Semester
+					lineageTag: b88994d9-d8c6-4998-99ba-085fb3a94770
+					column: Semester
+
+				level Trimester
+					lineageTag: dd7fef0d-f664-41e0-84a9-c01bf6799ef9
+					column: Trimester
+
+				level Month
+					lineageTag: d9590049-269a-4277-b578-c949ef3e7fe1
+					column: Month
+
+				level Day
+					lineageTag: ed269440-ab0b-4535-a568-3c1f8b5469c5
+					column: Day
+
+			hierarchy 'Month Hierarchy'
+				lineageTag: a9550722-fa7a-41b4-a3a6-0723db7d6303
+
+				level Month
+					lineageTag: b31998e8-73d4-48bf-a74e-0c15deffede2
+					column: Month
+
+				level 'Registration Date'
+					lineageTag: cb844e88-6f80-41eb-80e2-2a6096fdf952
+					column: 'Registration Date'
+
+			partition dim_date = entity
+				mode: directLake
+				source
+					entityName: dim_date
+					expressionSource: 'DirectLake - LH_SOURCES_NA_MINHA_RUA'
+
+		table fact_weather_daily
+			lineageTag: 68533d70-e367-4564-ba61-978a9a4e4e6c
+			sourceLineageTag: [dbo].[fact_weather_daily]
+
+			measure Precipitation = SUM ( fact_weather_daily[precipitation_sum] )
+				displayFolder: Weather\Core
+				lineageTag: 68bfb07c-1582-4d7a-a5ba-1387874b37c5
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents (Rainy)' = ```
+					
+					VAR RainyPairs =
+					    CALCULATETABLE (
+					        SUMMARIZE (
+					            fact_weather_daily,
+					            fact_weather_daily[sk_date],
+					            fact_weather_daily[sk_location]
+					        ),
+					        KEEPFILTERS ( fact_weather_daily[Is_Rainy_Day] = 1 )
+					    )
+					RETURN
+					CALCULATE (
+					    [Incidents],
+					    TREATAS (
+					        RainyPairs,
+					        fact_incident_daily[sk_date],
+					        fact_incident_daily[sk_location]
+					    )
+					)
+					
+					```
+				formatString: 0
+				displayFolder: Weather\Rain vs Dry
+				lineageTag: 3aba2188-3645-4450-913c-434a47c5850c
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents (Dry)' = ```
+					
+					VAR DryPairs =
+					    CALCULATETABLE (
+					        SUMMARIZE (
+					            fact_weather_daily,
+					            fact_weather_daily[sk_date],
+					            fact_weather_daily[sk_location]
+					        ),
+					        KEEPFILTERS ( fact_weather_daily[Is_Rainy_Day] = 0 )
+					    )
+					RETURN
+					CALCULATE (
+					    [Incidents],
+					    TREATAS (
+					        DryPairs,
+					        fact_incident_daily[sk_date],
+					        fact_incident_daily[sk_location]
+					    )
+					)
+					
+					```
+				formatString: 0
+				displayFolder: Weather\Rain vs Dry
+				lineageTag: b4e7787e-3cb3-4a50-bf0d-d7614f828ac1
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Parish-Days (Rainy)' = ```
+					
+					VAR RainyPairs =
+					    CALCULATETABLE (
+					        SUMMARIZE (
+					            fact_weather_daily,
+					            fact_weather_daily[sk_date],
+					            fact_weather_daily[sk_location]
+					        ),
+					        KEEPFILTERS ( fact_weather_daily[Is_Rainy_Day] = 1 )
+					    )
+					RETURN
+					COUNTROWS ( RainyPairs )
+					
+					```
+				formatString: 0
+				displayFolder: Weather\Rain vs Dry
+				lineageTag: 283ba864-e6be-4b63-b4cb-c744abaa91b8
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Parish-Days (Dry)' = ```
+					
+					VAR DryPairs =
+					    CALCULATETABLE (
+					        SUMMARIZE (
+					            fact_weather_daily,
+					            fact_weather_daily[sk_date],
+					            fact_weather_daily[sk_location]
+					        ),
+					        KEEPFILTERS ( fact_weather_daily[Is_Rainy_Day] = 0 )
+					    )
+					RETURN
+					COUNTROWS ( DryPairs )
+					
+					```
+				formatString: 0
+				displayFolder: Weather\Rain vs Dry
+				lineageTag: fc73ff51-383e-4769-ad6b-687a1bc0f51b
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents per Parish-Day (Rainy)' = ```
+					
+					DIVIDE ( [Incidents (Rainy)], [Parish-Days (Rainy)] )
+					
+					```
+				displayFolder: Weather\Rain vs Dry
+				lineageTag: aa99aa9f-8ba9-4623-8e53-2c7d8f1d8e79
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Incidents per Parish-Day (Dry)' = ```
+					
+					DIVIDE ( [Incidents (Dry)], [Parish-Days (Dry)] )
+					
+					```
+				displayFolder: Weather\Rain vs Dry
+				lineageTag: a9060c0d-6dbd-4206-9689-87a1369c575a
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Rainy Share %' = ```
+					
+					DIVIDE ( [Incidents (Rainy)], [Incidents (Total Rainy+Dry)] )
+					
+					```
+				displayFolder: Weather\Rain vs Dry
+				lineageTag: 5cfb29a0-9d04-42ef-8755-2fd178b47d80
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Incidents (Total Rainy+Dry)' = ```
+					
+					[Incidents (Rainy)] + [Incidents (Dry)]
+					
+					```
+				formatString: 0
+				displayFolder: Weather\Rain vs Dry
+				lineageTag: 6c143b98-95d6-4356-9d9f-8dd37be0b2e7
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			measure 'Rainy Lift' = ```
+					
+					DIVIDE (
+					    [Incidents per Parish-Day (Rainy)],
+					    [Incidents per Parish-Day (Dry)]
+					)
+					
+					```
+				displayFolder: Weather\Sensitivity
+				lineageTag: 66bd2bf8-0aec-491a-8449-4c38796d7d8f
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Rainy Sensitivity Category' = ```
+					
+					VAR L = [Rainy Lift]
+					RETURN
+					SWITCH (
+					    TRUE(),
+					    ISBLANK(L), BLANK(),
+					    L >= 1.2, "High",
+					    L >= 0.8,  "Neutral",
+					    L >= 0.5, "Lower on rainy days",
+					    "Very low on rainy days"
+					)
+					
+					```
+				displayFolder: Weather\Sensitivity
+				lineageTag: e1f23837-e1ae-4f94-ad03-d6e0d687a3e0
+
+				changedProperty = Name
+
+				changedProperty = DisplayFolder
+
+			column sk_date
+				dataType: int64
+				isHidden
+				isNullable: false
+				formatString: 0
+				lineageTag: 694e6018-fd35-482c-8948-596e20469b49
+				sourceLineageTag: sk_date
+				summarizeBy: none
+				sourceColumn: sk_date
+
+				changedProperty = SummarizeBy
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = User
+
+			column sk_location
+				dataType: int64
+				isHidden
+				isNullable: false
+				formatString: 0
+				lineageTag: 3df65e75-1191-4249-98a5-40d1ff3c09fb
+				sourceLineageTag: sk_location
+				summarizeBy: none
+				sourceColumn: sk_location
+
+				changedProperty = SummarizeBy
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = User
+
+			column temperature_2m_max
+				dataType: double
+				lineageTag: 3cf1e7fe-45c4-4012-b2fd-788309fc4b1e
+				sourceLineageTag: temperature_2m_max
+				summarizeBy: sum
+				sourceColumn: temperature_2m_max
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column temperature_2m_min
+				dataType: double
+				lineageTag: fe55f889-8d5e-43dc-9bb8-01ea43246ec4
+				sourceLineageTag: temperature_2m_min
+				summarizeBy: sum
+				sourceColumn: temperature_2m_min
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column precipitation_sum
+				dataType: int64
+				lineageTag: 2c4c2340-e2ab-44e4-add1-d842a364871b
+				sourceLineageTag: precipitation_sum
+				summarizeBy: none
+				sourceColumn: precipitation_sum
+
+				changedProperty = DataType
+
+				changedProperty = SummarizeBy
+
+				annotation SummarizationSetBy = User
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column wind_speed_10m_max
+				dataType: double
+				lineageTag: 0ddf871d-39ee-4525-9409-ffdb2d687f14
+				sourceLineageTag: wind_speed_10m_max
+				summarizeBy: sum
+				sourceColumn: wind_speed_10m_max
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column Is_Rainy_Day
+				dataType: int64
+				formatString: 0
+				lineageTag: 6460fc72-dc46-462d-af81-bd5d16adf5f4
+				sourceLineageTag: Is_Rainy_Day
+				summarizeBy: sum
+				sourceColumn: Is_Rainy_Day
+
+				annotation SummarizationSetBy = Automatic
+
+			column bk_fact_weather
+				dataType: string
+				lineageTag: a0378c5e-3953-4e88-84d3-c7f62b311088
+				sourceLineageTag: bk_fact_weather
+				summarizeBy: none
+				sourceColumn: bk_fact_weather
+
+				annotation SummarizationSetBy = Automatic
+
+			column sk_fact_weather
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 4db32ef0-ebc1-4791-a566-d583c0917c44
+				sourceLineageTag: sk_fact_weather
+				summarizeBy: none
+				sourceColumn: sk_fact_weather
+
+				changedProperty = IsHidden
+
+				changedProperty = SummarizeBy
+
+				annotation SummarizationSetBy = User
+
+			partition fact_weather_daily = entity
+				mode: directLake
+				source
+					entityName: fact_weather_daily
+					expressionSource: 'DirectLake - LH_SOURCES_NA_MINHA_RUA'
+
+		table dim_incident_type
+			lineageTag: efe68e37-4d6a-41bf-80c5-131d016b3b9c
+			sourceLineageTag: [dbo].[dim_incident_type]
+
+			column Area
+				dataType: string
+				lineageTag: 53995066-b3c6-4de5-865b-6a8e400f4376
+				sourceLineageTag: Area
+				summarizeBy: none
+				sourceColumn: Area
+
+				annotation SummarizationSetBy = Automatic
+
+			column Type
+				dataType: string
+				lineageTag: a6cb51fc-bebd-403b-92c0-2a0a0a6253af
+				sourceLineageTag: Type
+				summarizeBy: none
+				sourceColumn: Type
+
+				annotation SummarizationSetBy = Automatic
+
+			column bk_incident_type
+				dataType: string
+				lineageTag: 87f887cb-00bc-4822-bba2-12a1319a7909
+				sourceLineageTag: bk_incident_type
+				summarizeBy: none
+				sourceColumn: bk_incident_type
+
+				annotation SummarizationSetBy = Automatic
+
+			column sk_incident_type
+				dataType: int64
+				isHidden
+				isNullable: false
+				formatString: 0
+				lineageTag: bcd3e057-eae5-4700-9cd2-c9dda870bb71
+				sourceLineageTag: sk_incident_type
+				summarizeBy: none
+				sourceColumn: sk_incident_type
+
+				changedProperty = SummarizeBy
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = User
+
+			hierarchy 'Area Hierarchy'
+				lineageTag: 528a2c01-449e-4b22-b49d-746f90f0f086
+
+				level Area
+					lineageTag: cca1f466-14ca-40fc-9835-920bbe3fca19
+					column: Area
+
+				level Type
+					lineageTag: 4ab993c3-0838-4141-b5d3-a804e78da3fe
+					column: Type
+
+			partition dim_incident_type = entity
+				mode: directLake
+				source
+					entityName: dim_incident_type
+					expressionSource: 'DirectLake - LH_SOURCES_NA_MINHA_RUA'
+
+		table dim_location
+			lineageTag: 4b828649-d2d1-4f02-b734-4b18fd858788
+			sourceLineageTag: [dbo].[dim_location]
+
+			column 'Parish Name'
+				dataType: string
+				lineageTag: 1a96e556-7780-41c7-9898-9a8050e7b70a
+				sourceLineageTag: Parish Name
+				summarizeBy: none
+				sourceColumn: Parish Name
+
+				annotation SummarizationSetBy = Automatic
+
+			column Latitude_Centroid
+				dataType: double
+				lineageTag: b303e17d-83c5-4799-925e-bef89aa499e3
+				sourceLineageTag: Latitude_Centroid
+				summarizeBy: sum
+				sourceColumn: Latitude_Centroid
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column Longitude_Centroid
+				dataType: double
+				lineageTag: 354ed789-0aa0-471f-baf8-e0c910132978
+				sourceLineageTag: Longitude_Centroid
+				summarizeBy: sum
+				sourceColumn: Longitude_Centroid
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column bk_location
+				dataType: string
+				lineageTag: ef1cb66b-df0a-43fe-864c-495eeb603da6
+				sourceLineageTag: bk_location
+				summarizeBy: none
+				sourceColumn: bk_location
+
+				annotation SummarizationSetBy = Automatic
+
+			column sk_location
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 1bfb0e56-30ae-4b83-bcaf-fbba469ce3b1
+				sourceLineageTag: sk_location
+				summarizeBy: none
+				sourceColumn: sk_location
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = Automatic
+
+			partition dim_location = entity
+				mode: directLake
+				source
+					entityName: dim_location
+					expressionSource: 'DirectLake - LH_SOURCES_NA_MINHA_RUA'
+
+		relationship ca6d60ce-fe90-a35c-a1bf-1b6cd20b546b
+			relyOnReferentialIntegrity
+			fromColumn: fact_weather_daily.sk_date
+			toColumn: dim_date.sk_date
+
+		relationship d2e9e5b8-ac69-9815-5fd7-9d4cabeef08a
+			relyOnReferentialIntegrity
+			fromColumn: fact_incident_daily.sk_date
+			toColumn: dim_date.sk_date
+
+		relationship 91bb9029-cd19-0cbd-7bfc-54430b460e20
+			relyOnReferentialIntegrity
+			fromColumn: fact_incident_daily.sk_incident_type
+			toColumn: dim_incident_type.sk_incident_type
+
+		relationship 273fcd5a-174a-1884-ae5c-8674bf6fcc1c
+			relyOnReferentialIntegrity
+			fromColumn: fact_incident_daily.sk_location
+			toColumn: dim_location.sk_location
+
+		relationship 35269756-6a14-6dde-f3d1-813df6daa63f
+			relyOnReferentialIntegrity
+			fromColumn: fact_weather_daily.sk_location
+			toColumn: dim_location.sk_location
+
+		expression 'DirectLake - LH_SOURCES_NA_MINHA_RUA' =
+				let
+				    Source = AzureStorage.DataLake("https://onelake.dfs.fabric.microsoft.com/235ed27f-bd32-43a9-93a3-cd913c6d292c/3bd3ae8f-fc8d-4233-80cd-88b846c96078", [HierarchicalNavigation=true])
+				in
+				    Source
+			lineageTag: bd5ab4e4-d8ad-4cf3-b0bd-20cfc05d853c
+
+			annotation PBI_IncludeFutureArtifacts = False
+
+			annotation PBI_RemovedChildren = [{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[stg_incidents_appended]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[dim_date_silver]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[dim_location_silver]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[dim_incidenttype_silver]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[fact_incident_daily_silver]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[tbl_bronze_incidents_raw]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[tbl_bronze_weather_raw]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[fact_weather_daily_silver]"}},"objectType":"Table"}]
+
+		annotation PBI_QueryOrder = ["DirectLake - LH_SOURCES_NA_MINHA_RUA"]
+
+		annotation __PBI_TimeIntelligenceEnabled = 1
+
+		annotation __LastRPTime = 134091867844851919
+
+		annotation PBI_ProTooling = ["DirectLakeOnOneLakeInWeb","WebModelingEdit","RemoteModeling","TMDLView_Desktop"]
+

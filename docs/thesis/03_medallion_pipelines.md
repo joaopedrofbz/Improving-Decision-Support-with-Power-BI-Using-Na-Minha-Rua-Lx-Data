@@ -48,20 +48,24 @@ Purpose. Retrieve historical daily weather from Open-Meteo for the parishes pres
  
 Figure 3-PL_BRONZE_WEATHER
 Notebook structure. PL_BRONZE_WEATHER consists of a Notebook activity (e.g., NB_Bronze_Weather_OpenMeteo) orchestrating five phases:
+
 Phase 0 – Configuration and imports.
 o	Defines TARGET_TABLE = "tbl_bronze_weather_raw".
 o	Specifies the daily variables to retrieve (temperature_2m_max, temperature_2m_min, precipitation_sum, wind_speed_10m_max), the target time zone (Europe/Lisbon), retry strategy, batching size, and precision for latitude/longitude.
 o	Imports PySpark, requests, pandas, numpy, and concurrency utilities, and defines ensure_col_order_and_types to enforce a canonical column order in the final pandas DataFrame.
+
 Phase 1 – Date window from DimDate.
 o	Reads dim_date_silver and selects the Registration Date column as a date.
 o	Computes start_date and end_date as the minimum and maximum dates available, and derives N_DAYS as the number of days in this interval.
 o	Logs the temporal window that will be requested from Open-Meteo. This guarantees temporal alignment between incident workloads and weather, which is essential for BQ5.1–BQ5.4.
+
 Phase 2 – Coordinates per parish.
 o	Reads dim_location_silver.
 o	Validates that the table contains Parish Name, Latitude_Centroid, and Longitude_Centroid.
 o	Normalises parish names (upper + trim) and casts coordinates to double.
 o	Drops nulls and duplicates, producing a list of coordinates of the form (latitude, longitude, parish) for all target parishes.
 o	Logs the number of parishes and the expected number of rows (parishes × N_DAYS).
+
 Phase 3 – HTTP session and fetch_daily function.
 o	Configures an HTTP session with retry logic (exponential backoff, respect for Retry-After headers, and handling of transient 5xx errors).
 o	Defines fetch_daily(lat, lon, freg) which:
@@ -69,10 +73,12 @@ o	Defines fetch_daily(lat, lon, freg) which:
 	Converts the JSON response into a pandas DataFrame;
 	Converts time into a date column, attaches latitude, longitude, and parish; and
 	Ensures numeric typing of all meteorological fields.
+
 Phase 4 – Batch execution with progress logging.
 o	Uses a ThreadPoolExecutor to call fetch_daily in parallel for batches of parishes, respecting a given batch size and cooldown between batches.
 o	Accumulates all partial DataFrames into frames, tracks the number of rows obtained and expected, and logs progress (coordinates processed, rows retrieved, elapsed time, and estimated time remaining).
 o	Raises an error if no data are returned, ensuring robustness against misconfiguration.
+
 Phase 5 – Full load into tbl_bronze_weather_raw.
 o	Concatenates all frames into all_pdf, enforces column order and types, and creates a Spark DataFrame with an explicit schema (date and metric types).
 o	Normalises parish names (upper + trim), rounds coordinates to the same scale as dim_location_silver, drops null parish/date combinations, and removes duplicate (date, parish) pairs.

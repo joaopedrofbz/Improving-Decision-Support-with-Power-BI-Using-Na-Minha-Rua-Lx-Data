@@ -37,5 +37,5 @@ The project uses:
 These needs drive the pipelines, the dimensional model and the measures used in the Power BI dashboards.
 
 Full narrative:  
-- [Design and Operationalisation with Medallion](docs/thesis/03_medallion_pipelines_full.md)  
-- [Measures Design](docs/thesis/03_measures_design_full.md)
+- [Design and Operationalisation with Medallion](docs/thesis/03_medallion_pipelines.md)  
+- [Measures Design](docs/thesis/03_measures_design.md)

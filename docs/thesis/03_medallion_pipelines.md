@@ -1,6 +1,7 @@
 # Design and operationalisation with Medallion
 
 The Kimball design is operationalised in Microsoft Fabric through a set of ELT pipelines that follow the Medallion pattern (Bronze → Silver → Gold). Bronze preserves raw data with minimal transformation; Silver standardises and conforms them into dimensional structures; Gold publishes the star schemas that underpin the semantic model in Power BI. This subsection documents the concrete pipelines, their activities, and how they collectively implement Step 7 (“design the ELT/ETL system”) of Kimball’s nine-step method.
+
 ---
 
 ## Bronze – ingestion and fidelity preservation

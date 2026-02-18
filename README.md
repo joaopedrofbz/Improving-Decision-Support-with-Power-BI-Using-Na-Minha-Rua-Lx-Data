@@ -1,41 +1,49 @@
 # Improving Decision Support with Power BI Using Na Minha Rua LX Data
 
-This repository contains the technical artefacts of the master’s dissertation  
-**“Dashboards for Urban Incident Reporting: Improving Decision Support with Power BI Using Na Minha Rua LX Data”**.
+This repository contains the technical artefacts of the master’s dissertation **“Dashboards for Urban Incident Reporting: Improving Decision Support with Power BI Using Na Minha Rua LX Data”**.
 
-The repo acts as a **technical appendix to Chapter 3 (Methodology)** of the thesis:
-- Full Medallion (Bronze–Silver–Gold) ELT pipelines in Microsoft Fabric;
-- Kimball dimensional model over Na Minha Rua LX incidents and Open-Meteo weather;
-- Power BI semantic model (TMDL) and DAX measures;
-- Dashboard report file and screenshots.
+The repository is intended as a **technical appendix to Chapter 3 (Methodology)** and documents:
+- The Medallion (Bronze–Silver–Gold) ELT design implemented in Microsoft Fabric;
+- The Kimball-style dimensional model over Na Minha Rua LX incidents and Open-Meteo weather;
+- The Power BI semantic model (TMDL) and DAX measures used by the dashboards.
+
+> **Note on Fabric Git export:** due to limitations in Fabric Git integration in this project, some operational artefacts (e.g., Dataflow/Notebook definitions) could not be exported as code files. In those cases, the repository provides a precise narrative specification of each transformation step, while the semantic layer is versioned via TMDL.
+
+---
 
 ## 1. Methodology in one page
 
-The project uses:
+### 1.1 Dimensional modelling (Kimball)
 
-- **Kimball dimensional modelling**  
-  Facts: `FactIncidentDaily`, `FactWeatherDaily`.  
-  Conformed dimensions: `DimDate`, `DimLocation`, `DimIncidentType`.  
-  Grain:  
-  - Incidents – one row per *Day × Parish × IncidentType*  
-  - Weather – one row per *Day × Parish*
+**Facts**
+- `fact_incident_daily` (**event-level**): **1 row = 1 incident occurrence** (one citizen report record) linked to Date, Location, and IncidentType.  
+  *Naming note:* although the physical table name includes “daily”, the grain is **not aggregated**; daily and higher-level rollups are computed in DAX and visuals.
+- `fact_weather_daily` (**daily observations**): **1 row = 1 parish–day** with precipitation/temperature/wind metrics and derived flags (e.g., `Is_Rainy_Day`).
 
-- **Medallion Architecture in Microsoft Fabric**  
-  - **Bronze** – raw Na Minha Rua LX Excel exports + raw Open-Meteo daily weather, preserved with minimal changes.  
-  - **Silver** – cleaning, standardisation and conformance into dimensional tables and daily facts.  
-  - **Gold** – publication of star schemas and refresh of a Direct Lake semantic model used by the dashboards.
+**Conformed dimensions**
+- `dim_date`
+- `dim_location`
+- `dim_incident_type`
 
-- **Business Needs BN1–BN7**  
-  1. Standardised space–time visibility of citizen-reported workloads  
-  2. Contextualisation via seasonal baselines  
-  3. Early identification of anomalies and spatial hotspots  
-  4. Territory-focused prioritisation under capacity constraints  
-  5. Pragmatic integration of weather as an exogenous factor  
-  6. Transparent and traceable indicators based on open data  
-  7. Self-service exploration for different municipal roles  
+### 1.2 Medallion architecture in Microsoft Fabric
+- **Bronze**: preserve raw Na Minha Rua LX exports and raw daily weather with minimal transformation.
+- **Silver**: standardise, clean, and conform into dimensions and facts with surrogate keys.
+- **Gold**: publish stable star-schema tables used by the Direct Lake semantic model.
 
-These needs drive the pipelines, the dimensional model and the measures used in the Power BI dashboards.
+### 1.3 Business Needs (BN1–BN7)
+1. **BN1** – Standardised space–time visibility of citizen-reported workloads  
+2. **BN2** – Contextualisation via seasonal baselines  
+3. **BN3** – Early identification of anomalies and spatial hotspots  
+4. **BN4** – Territory-focused prioritisation under capacity constraints  
+5. **BN5** – Pragmatic integration of weather as an exogenous factor  
+6. **BN6** – Transparent and traceable indicators grounded in open data  
+7. **BN7** – Self-service exploration for different municipal roles  
 
-Full narrative:  
-- [Design and Operationalisation with Medallion](docs/thesis/03_medallion_pipelines.md)  
-- [Measures Design](docs/thesis/03_measures_design.md)
+These needs drive the pipelines, the dimensional model, and the DAX measures used in Power BI.
+
+---
+
+## 2. Thesis cross-reference (repo narratives)
+
+- **Design and operationalisation with Medallion:** `docs/thesis/03_medallion_pipelines.md`  
+- **Measures design (DAX):** `docs/thesis/03_measures_design.md`

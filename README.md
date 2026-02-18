@@ -6,9 +6,6 @@ The repository is intended as a **technical appendix to Chapter 3 (Methodology)*
 - The Medallion (Bronze–Silver–Gold) ELT design implemented in Microsoft Fabric;
 - The Kimball-style dimensional model over Na Minha Rua LX incidents and Open-Meteo weather;
 - The Power BI semantic model (TMDL) and DAX measures used by the dashboards.
-
-> **Note on Fabric Git export:** due to limitations in Fabric Git integration in this project, some operational artefacts (e.g., Dataflow/Notebook definitions) could not be exported as code files. In those cases, the repository provides a precise narrative specification of each transformation step, while the semantic layer is versioned via TMDL.
-
 ---
 
 ## 1. Methodology in one page

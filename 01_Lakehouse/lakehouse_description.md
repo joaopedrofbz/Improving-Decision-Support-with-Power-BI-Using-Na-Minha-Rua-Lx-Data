@@ -38,7 +38,6 @@ This document describes the logical contract of the Lakehouse tables across Meda
 ### `fact_incident_daily_silver`
 - **Grain (Opção A – event-level):** **1 row = 1 incident occurrence**
 - **Keys:** `sk_fact_incident`, `sk_date`, `sk_location`, `sk_incident_type`
-- **Notes:** a composite business key may be kept for grouping (e.g., Day × Parish × IncidentType), but **no physical aggregation** is applied in the table.
 
 ### `fact_weather_daily_silver`
 - **Grain:** 1 row = 1 parish–day
@@ -53,5 +52,5 @@ Gold tables mirror Silver schema and act as the stable contract for the semantic
 - `dim_date`
 - `dim_location`
 - `dim_incident_type`
-- `fact_incident_daily` (**event-level**)
+- `fact_incident_daily`
 - `fact_weather_daily`

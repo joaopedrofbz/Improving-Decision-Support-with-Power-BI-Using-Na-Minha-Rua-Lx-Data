@@ -36,7 +36,7 @@ This document describes the logical contract of the Lakehouse tables across Meda
 - **Attributes:** Area, Type
 
 ### `fact_incident_daily_silver`
-- **Grain (Opção A – event-level):** **1 row = 1 incident occurrence**
+- **Grain** **1 row = 1 incident occurrence**
 - **Keys:** `sk_fact_incident`, `sk_date`, `sk_location`, `sk_incident_type`
 
 ### `fact_weather_daily_silver`

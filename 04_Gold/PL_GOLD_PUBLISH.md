@@ -37,4 +37,4 @@ After all copy activities succeed, the pipeline triggers a refresh of the Direct
 
 ## Relation to thesis
 
-PL_GOLD_PUBLISH is described in Chapter 3 under the Gold tier and links directly to the semantic model and measures specified in Section 3.6.
+PL_GOLD_PUBLISH is described in Chapter 3 under the Gold tier and links directly to the semantic model and measures.

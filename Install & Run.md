@@ -1,4 +1,4 @@
-## Install & Run (Manual import in Microsoft Fabric — Direct Lake, no Git integration)
+## Install & Run (Manual import in Microsoft Fabric — Direct Lake)
 ---
 
 ### 0) What you will import (artefact packaging)
@@ -15,7 +15,7 @@ This repo is reproducible without workspace Git integration via these artefacts:
    Used for the Bronze weather extraction (Open-Meteo) before Silver weather conformance.
 
 4) **Power BI report (`*.pbix`)**  
-   The repo includes a PBIX for the report layer (note: this is **PBIX**, not PBIP). The semantic model is handled separately as **Direct Lake + TMDL** (next section). (User note; Direct Lake design is stated in the repo’s README.)
+   The repo includes a PBIX for the report layer. The semantic model is handled separately as **Direct Lake + TMDL** (next section). (User note; Direct Lake design is stated in the repo’s README.)
 
 5) **Semantic model exported as TMDL code**  
    The semantic model metadata (relationships, measures, display folders) is exported as **TMDL**, which can be applied/edited via **TMDL view** in Power BI Desktop.
@@ -35,7 +35,7 @@ This repo is reproducible without workspace Git integration via these artefacts:
 
 ### 2) Workspace setup (Fabric)
 
-1. Create a workspace (e.g., `NMRLX_Repro_Manual`).
+1. Create a workspace (e.g., `NMRLX`).
 2. Create a Lakehouse (e.g., `LH_NMRLX`).
 3. In Lakehouse **Files**, create:
    - `Files/incidents/`
@@ -137,7 +137,7 @@ The repo’s semantic model was exported using **TMDL**. Apply it to reproduce r
 
 ---
 
-### 9) Execute the end-to-end run (recommended order)
+### 9) Execute the end-to-end run
 
 Run the orchestration pipeline or execute in the dependency-safe sequence below.
 
